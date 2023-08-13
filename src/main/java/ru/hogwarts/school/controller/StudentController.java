@@ -59,4 +59,13 @@ public class StudentController {
     public ResponseEntity<Collection<Student>> getAllStudents() {
         return ResponseEntity.ok(studentService.getAllStudents());
     }
+
+    @GetMapping("/find-min-and-max")
+    public ResponseEntity<Collection<Student>> findByBetween(@RequestParam int min,
+                                                             @RequestParam int max) {
+        if (min > 0 || max > 0) {
+            return ResponseEntity.ok(studentService.findByBetween(min, max));
+        }
+        return ResponseEntity.ok(Collections.emptyList());
+    }
 }
