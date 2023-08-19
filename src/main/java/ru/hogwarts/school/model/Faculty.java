@@ -1,17 +1,32 @@
 package ru.hogwarts.school.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import javax.persistence.*;
+import java.util.List;
 import java.util.Objects;
 
+@Entity
 public class Faculty {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String color;
 
-    public Faculty(Long id, String name, String color) {
+    @OneToMany(mappedBy = "faculty")
+    @JsonBackReference
+    List<Student> student;
+
+    public Faculty() {
+    }
+
+    public Faculty(Long id, String name, String color, List<Student> student) {
         this.id = id;
         this.name = name;
         this.color = color;
+        this.student = student;
     }
 
     public Long getId() {
@@ -36,6 +51,14 @@ public class Faculty {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public List<Student> getStudent() {
+        return student;
+    }
+
+    public void setStudent(List<Student> student) {
+        this.student = student;
     }
 
     @Override
