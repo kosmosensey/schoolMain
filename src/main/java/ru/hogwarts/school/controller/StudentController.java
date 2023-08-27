@@ -32,16 +32,16 @@ public class StudentController {
         return studentService.createStudent(student);
     }
 
-    @PutMapping
-    public ResponseEntity<Student> addStudent(@RequestBody Student student) {
-        Student foundStudent = studentService.editStudent(student);
+    @PutMapping("/put/{id}")
+    public ResponseEntity<Student> addStudent(@RequestBody Student student, @PathVariable Long id) {
+        Student foundStudent = studentService.editStudent(id,student);
         if (foundStudent == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(foundStudent);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/dell/{id}")
     public ResponseEntity<Student> removeStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
         return ResponseEntity.ok().build();

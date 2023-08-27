@@ -1,6 +1,8 @@
 package ru.hogwarts.school.service;
 
 import org.springframework.stereotype.Service;
+import org.w3c.dom.ranges.RangeException;
+import ru.hogwarts.school.exception.FacultyBadRequest;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repositories.FacultyRepository;
 
@@ -20,15 +22,24 @@ public class FacultyService {
         return facultyRepository.save(faculty);
     }
 
-    public Faculty findFaculty(long id) {
-        return facultyRepository.findById(id).get();
-    }
-
-    public Faculty editFaculty(Faculty faculty) {
+    public Faculty updateFaculty(Long facultyId, Faculty faculty) {
+        faculty.setId(facultyId);
         return facultyRepository.save(faculty);
     }
 
+    public Faculty findFaculty(long id) {
+        boolean exists = facultyRepository.existsById(id);
+        if (!exists) {
+            throw new FacultyBadRequest();
+        }
+        return facultyRepository.findById(id).get();
+    }
+
     public void deleteFaculty(long id) {
+        boolean exists = facultyRepository.existsById(id);
+        if (!exists) {
+            throw new FacultyBadRequest();
+        }
         facultyRepository.deleteById(id);
     }
 

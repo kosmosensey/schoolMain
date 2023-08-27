@@ -22,11 +22,10 @@ public class Faculty {
     public Faculty() {
     }
 
-    public Faculty(Long id, String name, String color, List<Student> student) {
+    public Faculty(Long id, String name, String color) {
         this.id = id;
         this.name = name;
         this.color = color;
-        this.student = student;
     }
 
     public Long getId() {
