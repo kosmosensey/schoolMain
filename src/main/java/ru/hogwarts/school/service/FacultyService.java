@@ -28,10 +28,6 @@ public class FacultyService {
     }
 
     public Faculty findFaculty(long id) {
-        boolean exists = facultyRepository.existsById(id);
-        if (!exists) {
-            throw new FacultyBadRequest();
-        }
         return facultyRepository.findById(id).get();
     }
 

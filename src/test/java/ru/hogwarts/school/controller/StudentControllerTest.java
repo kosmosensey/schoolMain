@@ -1,120 +1,154 @@
 package ru.hogwarts.school.controller;
 
-import org.assertj.core.api.AssertionsForClassTypes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import ru.hogwarts.school.model.Faculty;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import ru.hogwarts.school.model.Student;
+import ru.hogwarts.school.repositories.FacultyRepository;
+import ru.hogwarts.school.repositories.StudentRepository;
+import ru.hogwarts.school.service.StudentService;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WebMvcTest(StudentController.class)
 public class StudentControllerTest {
 
     @Autowired
-    private TestRestTemplate template;
+    private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private StudentRepository studentRepository;
+
+    @MockBean
+    private FacultyRepository facultyRepository;
+
+    @SpyBean
+    private StudentService studentService;
+
+    @InjectMocks
+    private StudentController studentController;
 
     @Test
-    void createStudent() {
-        ResponseEntity<Student> response = createStudentForTest("Anton", 29);
+    void getStudentInfo() throws Exception {
+        Student student = new Student(1L, "Anton", 29);
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("Anton");
-        assertThat(response.getBody().getAge()).isEqualTo(29);
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/get/1")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Anton"))
+                .andExpect(jsonPath("$.age").value(29));
     }
 
     @Test
-    void addStudent() {
-        ResponseEntity<Student> response = createStudentForTest("Anton", 29);
-        Long studentId = response.getBody().getId();
+    void createStudent() throws Exception {
+        Student student = new Student(1L, "Anton", 29);
+        when(studentRepository.save(ArgumentMatchers.any(Student.class))).thenReturn(student);
 
-        template.put("/student/put/" + studentId, new Student(null, "Nikita", 30));
-
-        response = template.getForEntity("/student/" + studentId, Student.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("Nikita");
-        assertThat(response.getBody().getAge()).isEqualTo(30);
+        mockMvc.perform(MockMvcRequestBuilders.post("/student")
+                        .content(objectMapper.writeValueAsString(student))
+                        .contentType(APPLICATION_JSON)
+                        .accept(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Anton"))
+                .andExpect(jsonPath("$.age").value(29));
     }
 
     @Test
-    void removeStudent() {
-        ResponseEntity<Student> response = createStudentForTest("Anton", 29);
-        Long studentId = response.getBody().getId();
+    void addStudent() throws Exception {
+        Student student = new Student(1L, "Anton", 29);
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
+        when(studentRepository.save(ArgumentMatchers.any(Student.class))).thenReturn(student);
 
-        template.delete("/student/dell/" + studentId);
-
-        response = template.getForEntity("/student/" + studentId, Student.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-
+        mockMvc.perform(MockMvcRequestBuilders.put("/student/put/1")
+                        .content(objectMapper.writeValueAsString(student))
+                        .contentType(APPLICATION_JSON)
+                        .accept(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Anton"))
+                .andExpect(jsonPath("$.age").value(29));
     }
 
     @Test
-    void getStudentInfo() {
-        ResponseEntity<Student> response = createStudentForTest("Anton", 29);
-        Long studentId = response.getBody().getId();
+    void removeStudent() throws Exception {
+        Student student = new Student(1L, "Anton", 29);
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
+        when(studentRepository.save(ArgumentMatchers.any(Student.class))).thenReturn(student);
 
-        response = template.getForEntity("/student/" + studentId, Student.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("Anton");
-        assertThat(response.getBody().getAge()).isEqualTo(29);
+        mockMvc.perform(MockMvcRequestBuilders.delete("/student/dell/1")
+                        .content(objectMapper.writeValueAsString(student))
+                        .contentType(APPLICATION_JSON)
+                        .accept(APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void findStudents() {
-        createStudentForTest("Anton", 29);
-        createStudentForTest("Nikita", 30);
+    void findStudents() throws Exception {
+        int age = 29;
+        Student anton = new Student(1L, "Anton", age);
+        when(studentRepository.findAllByAge(age)).thenReturn(Collections.singletonList(anton));
 
-        ResponseEntity<Collection> response = template
-                .getForEntity("/student/find?age=29", Collection.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().size()).isEqualTo(1);
-        Map<String, Integer> next = (HashMap) response.getBody().iterator().next();
-        assertThat(next.get("age")).isEqualTo(29);
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/find?age=" + age)
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].name").value("Anton"))
+                .andExpect(jsonPath("$[0].age").value(age));
+    }
+
+
+
+    @Test
+    void findByBetween() throws Exception {
+        when(studentRepository.findAllByAgeBetween(20, 30))
+                .thenReturn(Arrays.asList(
+                        new Student(1L, "Anton", 29),
+                        new Student(2L, "Nikita", 22)
+                ));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/find-min-and-max?min=20&max=30")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].name").value("Anton"))
+                .andExpect(jsonPath("$[1].name").value("Nikita"));
     }
 
     @Test
-    void getAllStudents() {
-        createStudentForTest("Anton", 29);
-        createStudentForTest("Nikita", 30);
+    void getAllStudents() throws Exception {
+        List<Student> students = Arrays.asList(
+                new Student(1L, "Anton", 29),
+                new Student(2L, "Nikita", 22)
+        );
+        when(studentRepository.findAll()).thenReturn(students);
 
-        ResponseEntity<Collection> response = template
-                .getForEntity("/student/findAll", Collection.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().size()).isEqualTo(2);
-    }
-
-    @Test
-    void findByBetween() {
-        ResponseEntity<Student> student1 = createStudentForTest("Anton", 25);
-        ResponseEntity<Student> student2 = createStudentForTest("Nikita", 15);
-        ResponseEntity<Collection> response = template
-                .getForEntity("/student/find-min-and-max?min=20&max=30", Collection.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).size().isEqualTo(1);
-    }
-
-    private ResponseEntity<Student> createStudentForTest(String name, int age) {
-        ResponseEntity<Student> response = template.postForEntity("/student",
-                new Student(null, name, age),
-                Student.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        AssertionsForClassTypes.assertThat(response.getBody()).isNotNull();
-        return response;
+        mockMvc.perform(MockMvcRequestBuilders.get("/student/findAll")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].name").value("Anton"))
+                .andExpect(jsonPath("$[0].age").value(29))
+                .andExpect(jsonPath("$[1].name").value("Nikita"))
+                .andExpect(jsonPath("$[1].age").value(22));
     }
 }

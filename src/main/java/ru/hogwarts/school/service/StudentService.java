@@ -23,10 +23,6 @@ public class StudentService {
     }
 
     public Student findStudent(long id) {
-        boolean exists = studentRepository.existsById(id);
-        if (!exists) {
-            throw new StudentBadRequest();
-        }
         return studentRepository.findById(id).get();
     }
 

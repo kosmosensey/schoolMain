@@ -1,151 +1,168 @@
 package ru.hogwarts.school.controller;
 
-import org.junit.jupiter.api.AfterEach;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repositories.FacultyRepository;
-import ru.hogwarts.school.repositories.StudentRepository;
+import ru.hogwarts.school.service.FacultyService;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.http.MediaType.*;
 
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WebMvcTest(FacultyController.class)
 public class FacultyControllerTest {
 
     @Autowired
-    private TestRestTemplate template;
+    private MockMvc mockMvc;
 
     @Autowired
-    FacultyRepository facultyRepository;
+    private ObjectMapper objectMapper;
 
-    @Autowired
-    StudentRepository studentRepository;
+    @MockBean
+    private FacultyRepository facultyRepository;
 
-    @AfterEach
-    void clearBD() {
-        studentRepository.deleteAll();
-        facultyRepository.deleteAll();
+    @InjectMocks
+    private FacultyController facultyController;
+
+    @SpyBean
+    private FacultyService facultyService;
+
+
+    @Test
+    void getFacultyInfo() throws Exception {
+        Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
+
+        mockMvc.perform(get("/faculty/1")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Hogwarts"))
+                .andExpect(jsonPath("$.color").value("Red"));
     }
 
     @Test
-    void createFaculty() {
-        ResponseEntity<Faculty> response = createFacultyForTest("one", "red");
+    void createFaculty() throws Exception {
+        Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
+        when(facultyRepository.save(ArgumentMatchers.any(Faculty.class))).thenReturn(faculty);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("one");
-        assertThat(response.getBody().getColor()).isEqualTo("red");
+        mockMvc.perform(post("/faculty")
+                        .content(objectMapper.writeValueAsString(faculty))
+                        .contentType(APPLICATION_JSON)
+                        .accept(APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("Hogwarts"))
+                .andExpect(jsonPath("$.color").value("Red"));
     }
 
     @Test
-    void addFaculty() {
-        ResponseEntity<Faculty> response = createFacultyForTest("one", "red");
-        Long facultyId = response.getBody().getId();
+    void addFaculty() throws Exception {
+        Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
+        when(facultyRepository.save(ArgumentMatchers.any(Faculty.class))).thenReturn(faculty);
 
-        template.put("/faculty/put/" + facultyId, new Faculty(null, "two", "blue"));
-
-        response = template.getForEntity("/faculty/" + facultyId, Faculty.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("two");
-        assertThat(response.getBody().getColor()).isEqualTo("blue");
+        mockMvc.perform(put("/faculty/put/1")
+                        .content(objectMapper.writeValueAsString(faculty))
+                        .contentType(APPLICATION_JSON)
+                        .accept(APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("Hogwarts"))
+                .andExpect(jsonPath("$.color").value("Red"));
     }
 
     @Test
-    void removeFaculty() {
-        ResponseEntity<Faculty> response = createFacultyForTest("one", "red");
-        Long facultyId = response.getBody().getId();
+    void removeFaculty() throws Exception {
+        Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
 
-        template.delete("/faculty/dell/" + facultyId);
-
-        response = template.getForEntity("/faculty/" + facultyId, Faculty.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        mockMvc.perform(delete("/faculty/dell/1")
+                        .content(objectMapper.writeValueAsString(faculty))
+                        .contentType(APPLICATION_JSON)
+                        .accept(APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void getFacultyInfo() {
-        ResponseEntity<Faculty> response = createFacultyForTest("one", "red");
-        Long facultyId = response.getBody().getId();
+    void getAllFaculty() throws Exception {
+        List<Faculty> faculties = Arrays.asList(
+                new Faculty(1L, "Hogwarts", "Red"),
+                new Faculty(2L, "Slytherin", "Blue")
+        );
+        when(facultyRepository.findAll()).thenReturn(faculties);
 
-        response = template.getForEntity("/faculty/" + facultyId, Faculty.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getName()).isEqualTo("one");
-        assertThat(response.getBody().getColor()).isEqualTo("red");
+        mockMvc.perform(get("/faculty/findAll")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].name").value("Hogwarts"))
+                .andExpect(jsonPath("$[0].color").value("Red"))
+                .andExpect(jsonPath("$[1].name").value("Slytherin"))
+                .andExpect(jsonPath("$[1].color").value("Blue"));
     }
 
     @Test
-    void getAllFaculty() {
-        createFacultyForTest("one", "red");
-        createFacultyForTest("two", "blue");
+    void findFaculties() throws Exception {
+        when(facultyService.findByColor("Red"))
+                .thenReturn(Arrays.asList(
+                        new Faculty(1L, "Hogwarts", "Red")
+                ));
 
-        ResponseEntity<Collection> response = template
-                .getForEntity("/faculty/findAll", Collection.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().size()).isEqualTo(2);
+        mockMvc.perform(get("/faculty/find-color")
+                        .param("color", "Red")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].name").value("Hogwarts"))
+                .andExpect(jsonPath("$[0].color").value("Red"))
+                .andExpect(jsonPath("$[0].student").doesNotExist());
     }
 
     @Test
-    void findByColorOrName() {
-        createFacultyForTest("one", "red");
-        createFacultyForTest("two", "blue");
+    void findByColorOrName() throws Exception {
+        when(facultyService.findByColorOrName("Red", "Red"))
+                .thenReturn(Arrays.asList(
+                        new Faculty(1L, "Hogwarts", "Red")
+                ));
 
-        ResponseEntity<Collection> response = template
-                .getForEntity("/faculty/by-color-or-name?color=red", Collection.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().size()).isEqualTo(1);
-        Map<String, String> next = (HashMap) response.getBody().iterator().next();
-        assertThat(next.get("color")).isEqualTo("red");
+        mockMvc.perform(get("/faculty/by-color-or-name")
+                        .param("color", "Red")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].name").value("Hogwarts"))
+                .andExpect(jsonPath("$[0].color").value("Red"))
+                .andExpect(jsonPath("$[0].student").doesNotExist());
     }
 
     @Test
-    void findFaculties() {
-        createFacultyForTest("one", "red");
-        createFacultyForTest("two", "blue");
+    void getByStudent() throws Exception {
+        Student student = new Student(1L, "Anton", 29);
+        Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
+        faculty.setStudent(Collections.singletonList(student));
 
-        ResponseEntity<Collection> response = template
-                .getForEntity("/faculty/find-color?color=blue", Collection.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().size()).isEqualTo(1);
-        Map<String, String> next = (HashMap) response.getBody().iterator().next();
-        assertThat(next.get("color")).isEqualTo("blue");
-    }
+        when(facultyService.getByStudentId(1L)).thenReturn(Optional.of(faculty));
 
-    @Test
-    void getByStudent() {
-        ResponseEntity<Faculty> response = createFacultyForTest("one", "red");
-        Student student = new Student(null, "Anton", 20);
-        Faculty faculty = response.getBody();
-        student.setFaculty(faculty);
-        ResponseEntity<Student> studentResponse = template.postForEntity("/student", student, Student.class);
-        assertThat(studentResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        Long StudentId = studentResponse.getBody().getId();
-
-        response = template.getForEntity("/faculty/by-student?studentId=" + StudentId, Faculty.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody()).isEqualTo(faculty);
-    }
-
-    private ResponseEntity<Faculty> createFacultyForTest(String name, String color) {
-        ResponseEntity<Faculty> response = template.postForEntity("/faculty",
-                new Faculty(null, name, color),
-                Faculty.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        return response;
+        mockMvc.perform(get("/faculty/by-student?studentId=1")
+                        .accept(APPLICATION_JSON)
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Hogwarts"))
+                .andExpect(jsonPath("$.color").value("Red"))
+                .andExpect(jsonPath("$[0].student").doesNotExist());
     }
 }
+
