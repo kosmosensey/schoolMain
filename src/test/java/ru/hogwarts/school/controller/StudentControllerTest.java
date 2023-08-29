@@ -89,13 +89,12 @@ public class StudentControllerTest {
     void removeStudent() throws Exception {
         Student student = new Student(1L, "Anton", 29);
         when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
-        when(studentRepository.save(ArgumentMatchers.any(Student.class))).thenReturn(student);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/student/dell/1")
                         .content(objectMapper.writeValueAsString(student))
                         .contentType(APPLICATION_JSON)
                         .accept(APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -2,7 +2,9 @@ package ru.hogwarts.school.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.hogwarts.school.exception.FacultyBadRequest;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.repositories.FacultyRepository;
 import ru.hogwarts.school.service.FacultyService;
 
 import java.util.Collection;
@@ -14,6 +16,8 @@ import java.util.Optional;
 public class FacultyController {
 
     private final FacultyService facultyService;
+
+    private FacultyRepository facultyRepository;
 
     public FacultyController(FacultyService facultyService) {
         this.facultyService = facultyService;

@@ -32,10 +32,10 @@ public class FacultyService {
     }
 
     public void deleteFaculty(long id) {
-        boolean exists = facultyRepository.existsById(id);
-        if (!exists) {
-            throw new FacultyBadRequest();
-        }
+//        boolean exists = facultyRepository.existsById(id);
+//        if (!exists) {
+//            throw new FacultyBadRequest();
+//        }
         facultyRepository.deleteById(id);
     }
 

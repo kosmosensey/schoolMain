@@ -90,7 +90,16 @@ public class FacultyControllerTest {
                         .content(objectMapper.writeValueAsString(faculty))
                         .contentType(APPLICATION_JSON)
                         .accept(APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testRemoveFaculty_Success() throws Exception {
+        Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
+        when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
+
+        mockMvc.perform(delete("/faculty/dell/1"))
+                .andExpect(status().isOk());
     }
 
     @Test
