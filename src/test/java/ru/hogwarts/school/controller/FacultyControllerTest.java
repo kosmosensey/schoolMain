@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.hogwarts.school.exception.FacultyBadRequest;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repositories.FacultyRepository;
@@ -84,7 +85,8 @@ public class FacultyControllerTest {
     @Test
     void removeFaculty() throws Exception {
         Faculty faculty = new Faculty(1L, "Hogwarts", "Red");
-        when(facultyRepository.findById(1L)).thenReturn(Optional.of(faculty));
+        when(facultyRepository.existsById(1L)).thenReturn(true);
+
 
         mockMvc.perform(delete("/faculty/dell/1")
                         .content(objectMapper.writeValueAsString(faculty))

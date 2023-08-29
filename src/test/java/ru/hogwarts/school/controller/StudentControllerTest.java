@@ -88,7 +88,7 @@ public class StudentControllerTest {
     @Test
     void removeStudent() throws Exception {
         Student student = new Student(1L, "Anton", 29);
-        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
+        when(studentRepository.existsById(1L)).thenReturn(true);
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/student/dell/1")
                         .content(objectMapper.writeValueAsString(student))

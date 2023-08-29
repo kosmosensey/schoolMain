@@ -32,10 +32,10 @@ public class StudentService {
     }
 
     public void deleteStudent(long id) {
-//        boolean exists = studentRepository.existsById(id);
-//        if (!exists) {
-//            throw new StudentBadRequest();
-//        }
+        boolean exists = studentRepository.existsById(id);
+        if (!exists) {
+            throw new StudentBadRequest();
+        }
         studentRepository.deleteById(id);
     }
 
