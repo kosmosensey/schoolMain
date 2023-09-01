@@ -1,6 +1,8 @@
 package ru.hogwarts.school.service;
 
 import org.springframework.stereotype.Service;
+import ru.hogwarts.school.exception.FacultyBadRequest;
+import ru.hogwarts.school.exception.StudentBadRequest;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repositories.StudentRepository;
 
@@ -24,11 +26,16 @@ public class StudentService {
         return studentRepository.findById(id).get();
     }
 
-    public Student editStudent(Student student) {
+    public Student editStudent(Long studentId,Student student) {
+        student.setId(studentId);
         return studentRepository.save(student);
     }
 
     public void deleteStudent(long id) {
+        boolean exists = studentRepository.existsById(id);
+        if (!exists) {
+            throw new StudentBadRequest();
+        }
         studentRepository.deleteById(id);
     }
 
