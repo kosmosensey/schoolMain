@@ -1,7 +1,5 @@
 package ru.hogwarts.school.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +18,6 @@ public class AvatarService {
     private final AvatarRepository avatarRepository;
     private final StudentRepository studentRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(AvatarService.class);
     @Value("${path.to.avatars.folder}")
     private Path avatarPath;
 
@@ -30,13 +27,11 @@ public class AvatarService {
     }
 
     public Avatar getById(Long id) {
-        logger.info("Was invoked method for get avatar by Id");
         return avatarRepository.findById(id)
                 .orElseThrow();
     }
 
     public Long save(Long studentId, MultipartFile multipartFile) throws IOException {
-        logger.info("Was invoked method for save avatar");
         String absolutePath = saveInDisk(studentId, multipartFile);
         Avatar avatar = saveInDataBase(studentId, multipartFile, absolutePath);
         return avatar.getId();
