@@ -68,4 +68,13 @@ public class StudentController {
         }
         return ResponseEntity.ok(Collections.emptyList());
     }
+
+    @GetMapping("/threads/async")
+    public void printAsync() {
+        studentService.printAsync();
+    }
+    @GetMapping("/threads/sync")
+    public void printSync() {
+        studentService.printSync();
+    }
 }
