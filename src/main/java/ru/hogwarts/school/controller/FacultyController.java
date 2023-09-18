@@ -77,4 +77,9 @@ public class FacultyController {
     public Optional<Faculty> getByStudent(@RequestParam Long studentId) {
         return facultyService.getByStudentId(studentId);
     }
+    @GetMapping("/steam/longest-name")
+    public String getLongestName() {
+        return facultyService.getLongestName();
+    }
+
 }
